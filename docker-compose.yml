@@ -1,0 +1,63 @@
+version: '3'
+
+services:
+
+  icatdb:
+    hostname: dbhost
+    build:
+        context: .
+        dockerfile: Dockerfile.postgres
+    networks:
+        default:
+            aliases:
+                [ "dbhost" ]
+
+  irodsprov:
+    hostname: irodshost
+    build:
+        context: .
+        dockerfile: Dockerfile.provider
+        args:
+          irods_vsn: ${irods_version}
+    networks:
+        default:
+            aliases:
+                [ "irodshost" ]
+    security_opt:
+        - seccomp:unconfined
+    cap_add:
+        - SYS_PTRACE
+
+  irodscons:
+    hostname: consumer
+    build:
+        context: .
+        dockerfile: Dockerfile.consumer
+        args:
+          irods_vsn: ${irods_version}
+    networks:
+        default:
+            aliases:
+                [ "consumer" ]
+    depends_on:
+     - irodsprov
+    security_opt:
+        - seccomp:unconfined
+    cap_add:
+        - SYS_PTRACE
+
+  client:
+    build:
+        context: .
+        dockerfile: Dockerfile.client
+        args:
+          irods_vsn: ${irods_version}
+    command: tail -f /dev/null
+    networks:
+        default:
+            aliases:
+                [ "client" ]
+    security_opt:
+        - seccomp:unconfined
+    cap_add:
+        - SYS_PTRACE
